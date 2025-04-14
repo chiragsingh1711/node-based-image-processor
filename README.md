@@ -1,5 +1,56 @@
 # node-based-image-processor
 
+## Installation Steps
+
+1.  Download and Extract OpenCV
+
+    - Download OpenCV 4.11.0 from the official OpenCV website
+
+    - Extract the downloaded archive to C:/opencv
+
+2.  Configure Environment Variables
+    Add the OpenCV bin directory to your system's PATH environment variable:
+
+    - Right-click on "My Computer" or "This PC" and select "Properties"
+
+    - Click on "Advanced system settings"
+
+    - Click on "Environment Variables"
+
+    - Under "System variables", find and select "Path", then click "Edit"
+
+    - Add the path to the OpenCV bin directory (e.g., C:\opencv\build\x64\vc16\bin)
+
+    - Click "OK" to save changes
+
+3.  Create a New Visual Studio Project
+    Open Visual Studio
+
+    - Create a new empty C++ project
+
+    - Ensure the platform is set to x64 (not Win32)
+
+4.  Configure Project Properties
+    For All Configurations (Debug and Release):
+
+    1. C++/General → Additional Include Directories:
+
+       - Add C:\opencv\build\include
+
+    2. Linker/General → Additional Library Directories:
+
+       - Add C:\opencv\build\x64\vc16\lib (adjust according to your Visual Studio version)
+
+    3. Linker/Input → Additional Dependencies:
+
+       - For Debug configuration: opencv_world4110d.lib
+
+       - For Release configuration: opencv_world4110.lib
+
+    4. Debugging → Environment:
+
+       - Add PATH=C:\opencv\build\x64\vc16\bin;%PATH%
+
 ## Brightness/Contrast Node
 
 1. Adjust image brightness with a slider (-100 to +100)
