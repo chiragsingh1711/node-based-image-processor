@@ -51,6 +51,14 @@
 
        - Add PATH=C:\opencv\build\x64\vc16\bin;%PATH%
 
+## Building and Running
+
+- Select the appropriate configuration (Debug or Release) and platform (x64)
+
+- Build the solution (F7 or Build → Build Solution)
+
+- Run the program (F5 or Debug → Start Debugging)
+
 ## Brightness/Contrast Node
 
 1. Adjust image brightness with a slider (-100 to +100)
