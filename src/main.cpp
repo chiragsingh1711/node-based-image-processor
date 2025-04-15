@@ -9,6 +9,7 @@
 #include "input/input_node.h"
 #include "core/output_node.h"
 #include "nodes/brightness_contrast_node.h"
+#include "nodes/channel_splitter_node.h"
 
 using namespace image_processor;
 
@@ -19,7 +20,7 @@ void displayImage(const std::string& windowName, const cv::Mat& image) {
 }
 
 
-void processSimpleGraph(const std::string& inputImagePath, const std::string& outputImagePath) {
+void processBrightnessContrast(const std::string& inputImagePath, const std::string& outputImagePath) {
     std::cout << "Creating a simple image processing graph..." << std::endl;
 
     // Create a node graph
@@ -66,6 +67,59 @@ void processSimpleGraph(const std::string& inputImagePath, const std::string& ou
 }
 
 
+
+void processChannelSplitter(const std::string& inputImagePath) {
+    std::cout << "Extracting RGB channels..." << std::endl;
+
+    NodeGraph graph;
+
+    // Creating nodes
+    InputNode* inputNode = new InputNode("Input");
+    ChannelSplitterNode* splitterNode = new ChannelSplitterNode("Channel Splitter");
+    OutputNode* redOutputNode = new OutputNode("Red Output");
+    OutputNode* greenOutputNode = new OutputNode("Green Output");
+    OutputNode* blueOutputNode = new OutputNode("Blue Output");
+
+    // Adding nodes to the graph
+    graph.addNode(inputNode);
+    graph.addNode(splitterNode);
+    graph.addNode(redOutputNode);
+    graph.addNode(greenOutputNode);
+    graph.addNode(blueOutputNode);
+
+    // Connect nodes
+    graph.connectNodes(inputNode->getId(), 0, splitterNode->getId(), 0);
+    graph.connectNodes(splitterNode->getId(), 2, redOutputNode->getId(), 0);   // Red channel (index 2)
+    graph.connectNodes(splitterNode->getId(), 1, greenOutputNode->getId(), 0); // Green channel (index 1)
+    graph.connectNodes(splitterNode->getId(), 0, blueOutputNode->getId(), 0);  // Blue channel (index 0)
+
+    // Load input image
+    if (!inputNode->loadImage(inputImagePath)) {
+        std::cerr << "Failed to load input image: " << inputImagePath << std::endl;
+        return;
+    }
+
+    // Process the graph
+    graph.processGraph();
+
+    // Save the output images
+    redOutputNode->saveImage("output_red_channel.png");
+    greenOutputNode->saveImage("output_green_channel.png");
+    blueOutputNode->saveImage("output_blue_channel.png");
+
+    // Display the input and output images
+    displayImage("Input Image", inputNode->getImage());
+    displayImage("Red Channel", redOutputNode->getImage());
+    displayImage("Green Channel", greenOutputNode->getImage());
+    displayImage("Blue Channel", blueOutputNode->getImage());
+
+    // Wait for a key press
+    cv::waitKey(0);
+}
+
+
+
+
 int main(int argc, char** argv) {
     // Image path
     std::string inputImagePath = "input/input.jpg";
@@ -75,7 +129,10 @@ int main(int argc, char** argv) {
     }
 
     
-    processSimpleGraph(inputImagePath, "output/output_simple.jpg");
+    processBrightnessContrast(inputImagePath, "output/output_simple.jpg");
+    processChannelSplitter(inputImagePath);
+
+
 
     std::cout << "All processing complete!" << std::endl;
 

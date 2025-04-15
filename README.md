@@ -82,7 +82,35 @@ inputImage.convertTo(outputImage, -1, m_alpha, m_beta);
 1. Split RGB/RGBA image into separate channel outputs
 2. Option to output grayscale representation of each channel
 
-(Add a before after image here)
+```C++
+std::vector<cv::Mat> channels;
+cv::split(inputImage, channels);
+m_channelCount = channels.size();
+
+// Creating 3-channel outputs for color visualization
+for (int i = 0; i < m_channelCount; ++i) {
+    std::vector<cv::Mat> outputChannels;
+
+    if (m_channelCount == 3) {
+        outputChannels = {
+            (i == 0) ? channels[i] : cv::Mat::zeros(inputImage.size(), CV_8UC1),  // Blue
+            (i == 1) ? channels[i] : cv::Mat::zeros(inputImage.size(), CV_8UC1),  // Green
+            (i == 2) ? channels[i] : cv::Mat::zeros(inputImage.size(), CV_8UC1)   // Red
+        };
+    }
+    else {
+        // For other channel counts, show single channel in first position
+        outputChannels.resize(3, cv::Mat::zeros(inputImage.size(), CV_8UC1));
+        outputChannels[0] = channels[i];
+    }
+
+    cv::Mat colorOutput;
+    cv::merge(outputChannels, colorOutput);
+    m_outputValues[i] = colorOutput;
+}
+```
+
+![Alt text](images/ColorChannelSplitterNode.png)
 
 ## Blur Node
 
