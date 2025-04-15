@@ -10,6 +10,7 @@
 #include "core/output_node.h"
 #include "nodes/brightness_contrast_node.h"
 #include "nodes/channel_splitter_node.h"
+#include "nodes/threshold_node.h"
 
 using namespace image_processor;
 
@@ -118,6 +119,52 @@ void processChannelSplitter(const std::string& inputImagePath) {
 }
 
 
+void processBlur(const std::string& inputImagePath, const std::string& outputImagePath) {
+    std::cout << "Creating a simple image processing graph..." << std::endl;
+
+    // Create a node graph
+    NodeGraph graph;
+
+    // Creating nodes
+    InputNode* inputNode = new InputNode("Input");
+    BlurNode* blurNode = new BlurNode("Blur", BlurType::GAUSSIAN, 15);
+    OutputNode* outputNode = new OutputNode("Output");
+
+    // Adding nodes to the graph
+    graph.addNode(inputNode);
+    graph.addNode(blurNode);
+    graph.addNode(outputNode);
+
+    // Connecting nodes
+    graph.connectNodes(inputNode->getId(), 0, blurNode->getId(), 0);
+    graph.connectNodes(blurNode->getId(), 0, outputNode->getId(), 0);
+
+    // Load input image
+    if (!inputNode->loadImage(inputImagePath)) {
+        std::cerr << "Failed to load input image: " << inputImagePath << std::endl;
+        return;
+    }
+
+    // Process the graph
+    graph.processGraph();
+
+    // Save the output image
+    if (!outputNode->saveImage(outputImagePath)) {
+        std::cerr << "Failed to save output image: " << outputImagePath << std::endl;
+    }
+    else {
+        std::cout << "Output image saved to: " << outputImagePath << std::endl;
+    }
+
+    // Display the input and output images
+    displayImage("Input Image", inputNode->getImage());
+    displayImage("Output Image", outputNode->getImage());
+
+    // Wait for a key press
+    cv::waitKey(0);
+
+}
+
 
 
 int main(int argc, char** argv) {
@@ -131,6 +178,7 @@ int main(int argc, char** argv) {
     
     processBrightnessContrast(inputImagePath, "output/output_simple.jpg");
     processChannelSplitter(inputImagePath);
+    processBlur(inputImagePath, "output_blur.jpg");
 
 
 

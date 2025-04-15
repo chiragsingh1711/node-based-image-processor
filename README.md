@@ -118,7 +118,37 @@ for (int i = 0; i < m_channelCount; ++i) {
 2. Option for uniform or directional blur
 3. Include preview of kernel for educational purposes
 
-(Add a before after image here)
+```C++
+cv::Mat outputImage;
+
+// Applying the selected blur effect
+switch (m_blurType) {
+    case BlurType::BOX:
+        cv::blur(inputImage, outputImage, cv::Size(m_kernelSize, m_kernelSize));
+        break;
+
+    case BlurType::GAUSSIAN:
+        cv::GaussianBlur(inputImage, outputImage, cv::Size(m_kernelSize, m_kernelSize), m_sigmaX, m_sigmaY);
+        break;
+
+    case BlurType::MEDIAN:
+        cv::medianBlur(inputImage, outputImage, m_kernelSize);
+        break;
+
+    case BlurType::BILATERAL:
+        cv::bilateralFilter(inputImage, outputImage, m_kernelSize, m_sigmaColor, m_sigmaSpace);
+        break;
+
+    default:
+        std::cerr << "BlurNode::process: Unknown blur type." << std::endl;
+        outputImage = inputImage.clone();
+        break;
+    }
+
+m_outputValues[0] = outputImage;
+```
+
+![Alt text](images/BlurNode.png)
 
 ## Threshold Node
 
