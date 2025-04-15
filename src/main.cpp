@@ -166,6 +166,100 @@ void processBlur(const std::string& inputImagePath, const std::string& outputIma
 }
 
 
+void processThreshold(const std::string& inputImagePath, const std::string& outputImagePath) {
+    std::cout << "Creating a simple image processing graph..." << std::endl;
+
+    // Create a node graph
+    NodeGraph graph;
+
+    // Creating nodes
+    InputNode* inputNode = new InputNode("Input");
+    ThresholdNode* thresholdNode = new ThresholdNode("Threshold", ThresholdType::ADAPTIVE_GAUSSIAN);
+    OutputNode* outputNode = new OutputNode("Output");
+
+    // Adding nodes to the graph
+    graph.addNode(inputNode);
+    graph.addNode(thresholdNode);
+    graph.addNode(outputNode);
+
+    // Connecting nodes
+    graph.connectNodes(inputNode->getId(), 0, thresholdNode->getId(), 0);
+    graph.connectNodes(thresholdNode->getId(), 0, outputNode->getId(), 0);
+
+    // Load input image
+    if (!inputNode->loadImage(inputImagePath)) {
+        std::cerr << "Failed to load input image: " << inputImagePath << std::endl;
+        return;
+    }
+
+    // Process the graph
+    graph.processGraph();
+
+    // Save the output image
+    if (!outputNode->saveImage(outputImagePath)) {
+        std::cerr << "Failed to save output image: " << outputImagePath << std::endl;
+    }
+    else {
+        std::cout << "Output image saved to: " << outputImagePath << std::endl;
+    }
+
+    // Display the input and output images
+    displayImage("Input Image", inputNode->getImage());
+    displayImage("Output Image", outputNode->getImage());
+
+    // Wait for a key press
+    cv::waitKey(0);
+
+}
+
+
+
+
+void processEdgeDetetction(const std::string& inputImagePath, const std::string& outputImagePath) {
+    std::cout << "Creating a simple image processing graph..." << std::endl;
+
+    // Create a node graph
+    NodeGraph graph;
+
+    // Creating nodes
+    InputNode* inputNode = new InputNode("Input");
+    EdgeDetectionNode* edgeNode = new EdgeDetectionNode("Edge Detection", EdgeDetectionType::CANNY, 50, 150);;
+    OutputNode* outputNode = new OutputNode("Output");
+
+    // Adding nodes to the graph
+    graph.addNode(inputNode);
+    graph.addNode(edgeNode);
+    graph.addNode(outputNode);
+
+    // Connecting nodes
+    graph.connectNodes(inputNode->getId(), 0, edgeNode->getId(), 0);
+    graph.connectNodes(edgeNode->getId(), 0, outputNode->getId(), 0);
+
+    // Load input image
+    if (!inputNode->loadImage(inputImagePath)) {
+        std::cerr << "Failed to load input image: " << inputImagePath << std::endl;
+        return;
+    }
+
+    // Process the graph
+    graph.processGraph();
+
+    // Save the output image
+    if (!outputNode->saveImage(outputImagePath)) {
+        std::cerr << "Failed to save output image: " << outputImagePath << std::endl;
+    }
+    else {
+        std::cout << "Output image saved to: " << outputImagePath << std::endl;
+    }
+
+    // Display the input and output images
+    displayImage("Input Image", inputNode->getImage());
+    displayImage("Output Image", outputNode->getImage());
+
+    // Wait for a key press
+    cv::waitKey(0);
+
+}
 
 
 int main(int argc, char** argv) {
@@ -180,6 +274,8 @@ int main(int argc, char** argv) {
     processBrightnessContrast(inputImagePath, "output/output_simple.jpg");
     processChannelSplitter(inputImagePath);
     processBlur(inputImagePath, "output_blur.jpg");
+    processThreshold(inputImagePath, "output_threshold.jpg");
+    processEdgeDetetction(inputImagePath, "output_edge.jpg");
 
 
 

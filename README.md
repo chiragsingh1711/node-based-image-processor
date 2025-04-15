@@ -66,16 +66,16 @@
 3. Provide reset buttons for each parameter
 
 ```c++
-BrightnessContrastNode("Brightness/Contrast", 1.2f, 10.0f);
-```
-
-![Alt text](images/BrightnessContrast.png)
-
-```c++
 // Brightness and contrast OpenCV Function
 // Formula: output = alpha * input + beta
 inputImage.convertTo(outputImage, -1, m_alpha, m_beta);
 ```
+
+```c++
+BrightnessContrastNode("Brightness/Contrast", 1.2f, 10.0f);
+```
+
+![Alt text](images/BrightnessContrast.png)
 
 ## Color Channel Splitter
 
@@ -217,7 +217,63 @@ ThresholdNode* thresholdNode = new ThresholdNode("Threshold", ThresholdType::ADA
 2. Allow configuration of parameters (thresholds, kernel size)
 3. Option to overlay edges on original image
 
-(Add a before after image here)
+```c++
+cv::Mat outputImage;
+cv::Mat grayImage;
+
+// Convert to grayscale if the image has multiple channels
+if (inputImage.channels() > 1) {
+    cv::cvtColor(inputImage, grayImage, cv::COLOR_BGR2GRAY);
+}
+else {
+    grayImage = inputImage.clone();
+}
+
+// Applying the selected edge detection method
+switch (m_edgeType) {
+case EdgeDetectionType::SOBEL: {
+    cv::Mat gradX, gradY;
+    cv::Sobel(grayImage, gradX, CV_16S, 1, 0, m_apertureSize);
+    cv::Sobel(grayImage, gradY, CV_16S, 0, 1, m_apertureSize);
+    cv::convertScaleAbs(gradX, gradX);
+    cv::convertScaleAbs(gradY, gradY);
+    cv::addWeighted(gradX, 0.5, gradY, 0.5, 0, outputImage);
+    break;
+}
+
+case EdgeDetectionType::SCHARR: {
+    cv::Mat gradX, gradY;
+    cv::Scharr(grayImage, gradX, CV_16S, 1, 0);
+    cv::Scharr(grayImage, gradY, CV_16S, 0, 1);
+    cv::convertScaleAbs(gradX, gradX);
+    cv::convertScaleAbs(gradY, gradY);
+    cv::addWeighted(gradX, 0.5, gradY, 0.5, 0, outputImage);
+    break;
+}
+
+case EdgeDetectionType::LAPLACIAN:
+    cv::Laplacian(grayImage, outputImage, CV_16S, m_apertureSize);
+    cv::convertScaleAbs(outputImage, outputImage);
+    break;
+
+case EdgeDetectionType::CANNY:
+    cv::Canny(grayImage, outputImage, m_threshold1, m_threshold2, m_apertureSize, m_L2gradient);
+    break;
+
+default:
+    std::cerr << "EdgeDetectionNode::process: Unknown edge detection type." << std::endl;
+    outputImage = grayImage.clone();
+    break;
+}
+
+m_outputValues[0] = outputImage;
+```
+
+```c++
+EdgeDetectionNode* edgeNode = new EdgeDetectionNode("Edge Detection", EdgeDetectionType::CANNY, 50, 150);
+```
+
+![Alt text](images/EdgeDetection.png)
 
 ## Blend Node
 
