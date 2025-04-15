@@ -167,6 +167,7 @@ void processBlur(const std::string& inputImagePath, const std::string& outputIma
 
 
 
+
 int main(int argc, char** argv) {
     // Image path
     std::string inputImagePath = "input/input.jpg";

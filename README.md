@@ -148,6 +148,10 @@ switch (m_blurType) {
 m_outputValues[0] = outputImage;
 ```
 
+```c++
+BlurNode* blurNode = new BlurNode("Blur", BlurType::GAUSSIAN, 15);
+```
+
 ![Alt text](images/BlurNode.png)
 
 ## Threshold Node
@@ -156,7 +160,56 @@ m_outputValues[0] = outputImage;
 2. Include options for different thresholding methods (binary, adaptive, Otsu)
 3. Display histogram of image to assist with threshold selection
 
-(Add a before after image here)
+```c++
+switch (m_thresholdType) {
+    case ThresholdType::BINARY:
+        cv::threshold(grayImage, outputImage, m_threshold, m_maxValue, cv::THRESH_BINARY);
+        break;
+
+    case ThresholdType::BINARY_INV:
+        cv::threshold(grayImage, outputImage, m_threshold, m_maxValue, cv::THRESH_BINARY_INV);
+        break;
+
+    case ThresholdType::TRUNC:
+        cv::threshold(grayImage, outputImage, m_threshold, m_maxValue, cv::THRESH_TRUNC);
+        break;
+
+    case ThresholdType::TOZERO:
+        cv::threshold(grayImage, outputImage, m_threshold, m_maxValue, cv::THRESH_TOZERO);
+        break;
+
+    case ThresholdType::TOZERO_INV:
+        cv::threshold(grayImage, outputImage, m_threshold, m_maxValue, cv::THRESH_TOZERO_INV);
+        break;
+
+    case ThresholdType::OTSU:
+        cv::threshold(grayImage, outputImage, m_threshold, m_maxValue, cv::THRESH_BINARY | cv::THRESH_OTSU);
+        break;
+
+    case ThresholdType::ADAPTIVE_MEAN:
+        cv::adaptiveThreshold(grayImage, outputImage, m_maxValue, cv::ADAPTIVE_THRESH_MEAN_C,
+            cv::THRESH_BINARY, m_blockSize, m_C);
+        break;
+
+    case ThresholdType::ADAPTIVE_GAUSSIAN:
+        cv::adaptiveThreshold(grayImage, outputImage, m_maxValue, cv::ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv::THRESH_BINARY, m_blockSize, m_C);
+        break;
+
+    default:
+        std::cerr << "ThresholdNode::process: Unknown threshold type." << std::endl;
+        outputImage = grayImage.clone();
+        break;
+    }
+
+m_outputValues[0] = outputImage;
+```
+
+```c++
+ThresholdNode* thresholdNode = new ThresholdNode("Threshold", ThresholdType::ADAPTIVE_GAUSSIAN);
+```
+
+![Alt text](images/ThresholdNode.png)
 
 ## Edge Detection Node
 
