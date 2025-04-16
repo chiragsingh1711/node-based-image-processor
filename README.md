@@ -281,7 +281,105 @@ EdgeDetectionNode* edgeNode = new EdgeDetectionNode("Edge Detection", EdgeDetect
 2. Support at least 5 blend modes (normal, multiply, screen, overlay, difference)
 3. Include opacity/mix slider
 
-(Add a before after image here)
+```c++
+    void BlendNode::process() {
+    if (!isReady()) {
+        std::cerr << "BlendNode::process: Node is not ready to process." << std::endl;
+        return;
+    }
+
+    auto input1 = getInputConnection(0);
+    auto input2 = getInputConnection(1);
+
+    if (!input1.first || !input2.first) {
+        std::cerr << "BlendNode::process: Missing input connections." << std::endl;
+        return;
+    }
+
+    cv::Mat inputImage1 = input1.first->getOutputValue(input1.second);
+    cv::Mat inputImage2 = input2.first->getOutputValue(input2.second);
+
+    if (inputImage1.empty() || inputImage2.empty()) {
+        std::cerr << "BlendNode::process: One or both input images are empty." << std::endl;
+        return;
+    }
+
+    // Ensure both images have the same size and type
+    if (inputImage1.size() != inputImage2.size()) {
+        // Resize the second image to match the first
+        std::cout << "Images not of same size" << std::endl;
+        cv::resize(inputImage2, inputImage2, inputImage1.size());
+    }
+
+    // Ensure same number of channels
+    if (inputImage1.channels() != inputImage2.channels()) {
+        if (inputImage2.channels() == 1) {
+            cv::cvtColor(inputImage2, inputImage2, cv::COLOR_GRAY2BGR);
+        }
+        else {
+            cv::cvtColor(inputImage2, inputImage2, cv::COLOR_BGR2GRAY);
+        }
+    }
+
+    // Convert images to the same type if needed
+    int targetType = inputImage1.type();
+    if (inputImage2.type() != targetType) {
+        inputImage2.convertTo(inputImage2, targetType);
+    }
+
+    cv::Mat outputImage;
+
+    // Apply the selected blending mode
+    switch (m_blendMode) {
+    case BlendMode::NORMAL:
+        applyNormalBlend(inputImage1, inputImage2, outputImage);
+        break;
+
+    case BlendMode::ADD:
+        applyAddBlend(inputImage1, inputImage2, outputImage);
+        break;
+
+    case BlendMode::MULTIPLY:
+        applyMultiplyBlend(inputImage1, inputImage2, outputImage);
+        break;
+
+    case BlendMode::SCREEN:
+        applyScreenBlend(inputImage1, inputImage2, outputImage);
+        break;
+
+    case BlendMode::OVERLAY:
+        applyOverlayBlend(inputImage1, inputImage2, outputImage);
+        break;
+
+    case BlendMode::DARKEN:
+        applyDarkenBlend(inputImage1, inputImage2, outputImage);
+        break;
+
+    case BlendMode::LIGHTEN:
+        applyLightenBlend(inputImage1, inputImage2, outputImage);
+        break;
+
+    case BlendMode::DIFFERENCE:
+        applyDifferenceBlend(inputImage1, inputImage2, outputImage);
+        break;
+
+    default:
+        std::cerr << "BlendNode::process: Unknown blend mode." << std::endl;
+        applyNormalBlend(inputImage1, inputImage2, outputImage);
+        break;
+    }
+
+    cv::addWeighted(inputImage1, 1.0 - m_alpha, inputImage2, m_alpha, 0.0, outputImage);
+
+    m_outputValues[0] = outputImage;
+}
+```
+
+```c++
+BlendNode* blendNode = new BlendNode("Blend", BlendMode::ADD, 0.3f);
+```
+
+![Alt text](images/BlendNode.png)
 
 ## Noise Generation Node
 
@@ -289,7 +387,40 @@ EdgeDetectionNode* edgeNode = new EdgeDetectionNode("Edge Detection", EdgeDetect
 2. Allow configuration of noise parameters (scale, octaves, persistence)
 3. Option to use noise as displacement map or direct color output
 
-(Add a before after image here)
+```c++
+void NoiseGenerationNode::process() {
+    if (m_width <= 0 || m_height <= 0) {
+        std::cerr << "NoiseGenerationNode: Invalid dimensions" << std::endl;
+        return;
+    }
+    cv::Mat noiseImage(m_height, m_width, CV_8UC3);
+
+    switch (m_noiseType) {
+        case NoiseType::GAUSSIAN:
+            generateGaussianNoise(noiseImage);
+            break;
+        case NoiseType::UNIFORM:
+            generateUniformNoise(noiseImage);
+            break;
+        case NoiseType::SALT_PEPPER:
+            generateSaltPepperNoise(noiseImage);
+            break;
+        default:
+            std::cerr << "NoiseGenerationNode::process: Unknown noise type." << std::endl;
+            noiseImage = cv::Mat::zeros(m_height, m_width, CV_8UC3);
+            break;
+    }
+
+    m_outputValues[0] = noiseImage;
+
+}
+```
+
+```c++
+NoiseGenerationNode* noiseNode = new NoiseGenerationNode("Noise", NoiseType::GAUSSIAN, 512, 512, 0.0f, 25.0f);
+```
+
+![Alt text](images/NoiseGeneration.png)
 
 ## Convolution Filter Node
 

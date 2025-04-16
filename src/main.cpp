@@ -11,6 +11,10 @@
 #include "nodes/brightness_contrast_node.h"
 #include "nodes/channel_splitter_node.h"
 #include "nodes/threshold_node.h"
+#include "nodes/blur_node.h"
+#include "nodes/edge_detection_node.h"
+#include "nodes/noise_generation_node.h"
+#include "nodes/blend_node.h"
 
 using namespace image_processor;
 
@@ -262,6 +266,99 @@ void processEdgeDetetction(const std::string& inputImagePath, const std::string&
 }
 
 
+
+void processBlendMode(const std::string& inputImagePath, const std::string& outputImagePath) {
+    std::cout << "Creating a simple image processing graph..." << std::endl;
+
+    NodeGraph graph;
+
+    // Creating nodes
+    InputNode* inputNode = new InputNode("Input");
+    NoiseGenerationNode* noiseNode = new NoiseGenerationNode("Noise", NoiseType::GAUSSIAN, 1024, 1024);
+    BlendNode* blendNode = new BlendNode("Blend", BlendMode::ADD, 0.3f);
+    OutputNode* outputNode = new OutputNode("Output");
+
+    // Adding nodes to the graph
+    graph.addNode(inputNode);
+    graph.addNode(noiseNode);
+    graph.addNode(blendNode);
+    graph.addNode(outputNode);
+
+    // Load input image first
+    if (!inputNode->loadImage(inputImagePath)) {
+        std::cerr << "Failed to load input image: " << inputImagePath << std::endl;
+        return;
+    }
+
+    // Configure noise node to match input dimensions
+    cv::Mat inputImage = inputNode->getImage();
+    noiseNode->setDimensions(inputImage.cols, inputImage.rows);
+    noiseNode->process();  // Generate noise before connecting
+
+    // Connecting nodes
+    graph.connectNodes(inputNode->getId(), 0, blendNode->getId(), 0);
+    graph.connectNodes(noiseNode->getId(), 0, blendNode->getId(), 1);
+    graph.connectNodes(blendNode->getId(), 0, outputNode->getId(), 0);
+
+    // Process the graph
+    graph.processGraph();
+
+    // Save and display results
+    if (!outputNode->saveImage(outputImagePath)) {
+        std::cerr << "Failed to save output image: " << outputImagePath << std::endl;
+    }
+    else {
+        std::cout << "Output image saved to: " << outputImagePath << std::endl;
+    }
+
+    displayImage("Input Image", inputNode->getImage());
+    displayImage("Output Image", outputNode->getImage());
+    cv::waitKey(0);
+}
+
+
+
+void processNoiseGeneration(const std::string& inputImagePath, const std::string& outputImagePath) {
+    std::cout << "Creating a simple image processing graph..." << std::endl;
+
+    // Create a node graph
+    NodeGraph graph;
+
+    // Creating nodes
+    NoiseGenerationNode* noiseNode = new NoiseGenerationNode("Noise", NoiseType::GAUSSIAN, 512, 512, 0.0f, 25.0f);
+    OutputNode* outputNode = new OutputNode("Output");
+
+    // Adding nodes to the graph
+    graph.addNode(noiseNode);
+    graph.addNode(outputNode);
+
+    // Connecting nodes
+    graph.connectNodes(noiseNode->getId(), 0, outputNode->getId(), 0);
+
+
+    // Process the graph
+    graph.processGraph();
+
+    // Save the output image
+    if (!outputNode->saveImage(outputImagePath)) {
+        std::cerr << "Failed to save output image: " << outputImagePath << std::endl;
+    }
+    else {
+        std::cout << "Output image saved to: " << outputImagePath << std::endl;
+    }
+
+    // Display the input and output images
+    displayImage("Output Image", outputNode->getImage());
+
+    // Wait for a key press
+    cv::waitKey(0);
+
+}
+
+
+
+
+
 int main(int argc, char** argv) {
     // Image path
     std::string inputImagePath = "input/input.jpg";
@@ -276,6 +373,8 @@ int main(int argc, char** argv) {
     processBlur(inputImagePath, "output_blur.jpg");
     processThreshold(inputImagePath, "output_threshold.jpg");
     processEdgeDetetction(inputImagePath, "output_edge.jpg");
+    processNoiseGeneration(inputImagePath, "output_noise.jpg");
+    processBlendMode(inputImagePath, "output_blend_add.jpg");
 
 
 
