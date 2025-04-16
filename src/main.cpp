@@ -15,6 +15,7 @@
 #include "nodes/edge_detection_node.h"
 #include "nodes/noise_generation_node.h"
 #include "nodes/blend_node.h"
+#include "nodes/convolution_filter_node.h"
 
 using namespace image_processor;
 
@@ -355,7 +356,51 @@ void processNoiseGeneration(const std::string& inputImagePath, const std::string
 
 }
 
+void processConvolution(const std::string& inputImagePath, const std::string& outputImagePath) {
+    std::cout << "Demonstrating custom convolution filters..." << std::endl;
 
+    // Create a node graph
+    NodeGraph graph;
+
+    // Create nodes
+    InputNode* inputNode = new InputNode("Input");
+    ConvolutionFilterNode* embossFilter = new ConvolutionFilterNode("Emboss Filter", ConvolutionFilterType::EMBOSS);
+
+    OutputNode* outputNode = new OutputNode("Output");
+
+    // Add nodes to the graph
+    graph.addNode(inputNode);
+    graph.addNode(embossFilter);
+    graph.addNode(outputNode);
+
+    // Connect nodes
+    graph.connectNodes(inputNode->getId(), 0, embossFilter->getId(), 0);
+    graph.connectNodes(embossFilter->getId(), 0, outputNode->getId(), 0);
+
+    // Load input image
+    if (!inputNode->loadImage(inputImagePath)) {
+        std::cerr << "Failed to load input image: " << inputImagePath << std::endl;
+        return;
+    }
+
+    // Process the graph
+    graph.processGraph();
+
+    // Save the output image
+    if (!outputNode->saveImage(outputImagePath)) {
+        std::cerr << "Failed to save output image: " << outputImagePath << std::endl;
+    }
+    else {
+        std::cout << "Output image saved to: " << outputImagePath << std::endl;
+    }
+
+    // Display the input and output images
+    displayImage("Input Image", inputNode->getImage());
+    displayImage("Output Image", outputNode->getImage());
+
+    // Wait for a key press
+    cv::waitKey(0);
+}
 
 
 
@@ -375,6 +420,7 @@ int main(int argc, char** argv) {
     processEdgeDetetction(inputImagePath, "output_edge.jpg");
     processNoiseGeneration(inputImagePath, "output_noise.jpg");
     processBlendMode(inputImagePath, "output_blend_add.jpg");
+    processConvolution(inputImagePath, "output_convolution.jpg");
 
 
 

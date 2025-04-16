@@ -428,4 +428,59 @@ NoiseGenerationNode* noiseNode = new NoiseGenerationNode("Noise", NoiseType::GAU
 2. Include presets for common filters (sharpen, emboss, edge enhance)
 3. Display visual feedback of the kernel effect
 
-(Add a before after image here)
+```c++
+    void ConvolutionFilterNode::process() {
+        if (!isReady()) {
+            std::cerr << "ConvolutionFilterNode::process: Node is not ready to process." << std::endl;
+            return;
+        }
+
+        auto inputConnection = getInputConnection(0);
+        if (inputConnection.first == nullptr) {
+            std::cerr << "ConvolutionFilterNode::process: No valid input connection." << std::endl;
+            return;
+        }
+
+        cv::Mat inputImage = inputConnection.first->getOutputValue(inputConnection.second);
+        if (inputImage.empty()) {
+            std::cerr << "ConvolutionFilterNode::process: Received empty image from input." << std::endl;
+            return;
+        }
+
+        cv::Mat outputImage;
+
+        // Apply the convolution filter
+        if (m_kernel.empty()) {
+            std::cerr << "ConvolutionFilterNode::process: Kernel is empty." << std::endl;
+            outputImage = inputImage.clone();
+        }
+        else {
+            // Process each channel separately for multi-channel images
+            if (inputImage.channels() > 1) {
+                std::vector<cv::Mat> channels;
+                cv::split(inputImage, channels);
+
+                std::vector<cv::Mat> filteredChannels;
+                for (const auto& channel : channels) {
+                    cv::Mat filteredChannel;
+                    cv::filter2D(channel, filteredChannel, -1, m_kernel, cv::Point(-1, -1), 0, m_borderType);
+                    filteredChannels.push_back(filteredChannel);
+                }
+
+                cv::merge(filteredChannels, outputImage);
+            }
+            else {
+                // Single channel image
+                cv::filter2D(inputImage, outputImage, -1, m_kernel, cv::Point(-1, -1), 0, m_borderType);
+            }
+        }
+
+        m_outputValues[0] = outputImage;
+    }
+```
+
+```c++
+ConvolutionFilterNode* embossFilter = new ConvolutionFilterNode("Emboss Filter", ConvolutionFilterType::EMBOSS);
+```
+
+![Alt text](images/ConvolutionFilterNode.png)
